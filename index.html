@@ -1,705 +1,1505 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>PayTrack | Project Payment Manager</title>
-<!-- Supabase JS Client -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ProjectPay Tracker - Financial Management</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 :root {
-  --netlify-teal: #00C7B7;
-  --netlify-teal-dark: #00A89A;
-  --netlify-dark: #1A1F2C;
-  --netlify-darker: #0D1117;
-  --netlify-gray: #6B7280;
-  --netlify-light-gray: #F3F4F6;
-  --netlify-white: #FFFFFF;
-  --netlify-success: #10B981;
-  --netlify-warning: #F59E0B;
-  --netlify-danger: #EF4444;
-  --sidebar-width: 260px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --dark: #1f2937;
+  --light: #f9fafb;
+  --gray: #6b7280;
+  --border: #e5e7eb;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --border-radius: 8px;
 }
-
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: var(--netlify-light-gray);
-  display: flex;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: #f3f4f6;
+  color: var(--dark);
+  line-height: 1.6;
   min-height: 100vh;
-  overflow-x: hidden;
+  padding: 20px;
 }
+.container { max-width: 1400px; margin: 0 auto; }
 
-.mobile-menu-toggle {
-  display: none;
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 1000;
-  background: var(--netlify-dark);
-  color: white;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  box-shadow: var(--shadow-md);
-  transition: all 0.2s;
-}
-
-.sidebar {
-  width: var(--sidebar-width);
-  background: var(--netlify-dark);
-  color: var(--netlify-white);
-  position: fixed;
-  height: 100vh;
-  overflow-y: auto;
-  z-index: 100;
-  transition: transform 0.25s ease-in-out;
-  flex-shrink: 0;
-}
-
-.sidebar-header {
-  padding: 20px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-  font-size: 1.2rem;
-  letter-spacing: -0.3px;
-}
-
-.logo-img {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+/* ==================== HEADER & NAVIGATION ==================== */
+header {
   background: white;
-  padding: 6px;
-  object-fit: contain;
-}
-
-.sidebar-nav {
-  padding: 16px 12px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  color: #9CA3AF;
-  text-decoration: none;
-  border-radius: 10px;
-  margin-bottom: 4px;
-  transition: all 0.2s;
-  cursor: pointer;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.nav-item i {
-  width: 22px;
-  font-size: 1rem;
-}
-
-.nav-item:hover, .nav-item.active {
-  background: rgba(0, 199, 183, 0.12);
-  color: var(--netlify-teal);
-}
-
-.nav-section {
-  padding: 20px 12px 8px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--netlify-gray);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.main-content {
-  margin-left: var(--sidebar-width);
-  flex: 1;
-  padding: 28px 32px;
-  min-width: 0;
-  transition: margin-left 0.25s;
-}
-
-.page {
-  display: none;
-  animation: fadeIn 0.25s ease;
-}
-
-.page.active {
-  display: block;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px);}
-  to { opacity: 1; transform: translateY(0);}
-}
-
-.page-header {
-  margin-bottom: 28px;
-}
-
-.page-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--netlify-dark);
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  color: var(--netlify-gray);
-  font-size: 0.9rem;
-  margin-top: 6px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--netlify-white);
-  border-radius: 20px;
-  padding: 18px 20px;
-  box-shadow: var(--shadow-sm);
-  border-left: 4px solid var(--netlify-teal);
-  transition: transform 0.1s ease, box-shadow 0.2s;
-}
-
-.stat-card.warning { border-left-color: var(--netlify-warning); }
-.stat-card.success { border-left-color: var(--netlify-success); }
-.stat-card.danger { border-left-color: var(--netlify-danger); }
-
-.stat-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--netlify-gray);
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 1.9rem;
-  font-weight: 800;
-  color: var(--netlify-dark);
-  line-height: 1.2;
-}
-
-.stat-subvalue {
-  font-size: 0.7rem;
-  color: var(--netlify-gray);
-  margin-top: 6px;
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-}
-
-.card {
-  background: var(--netlify-white);
-  border-radius: 20px;
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  transition: box-shadow 0.2s;
-}
-
-.card-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--netlify-light-gray);
+  border-radius: var(--border-radius);
+  padding: 15px 30px;
+  margin-bottom: 20px;
+  box-shadow: var(--card-shadow);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 15px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border: 1px solid var(--border);
 }
-
-.card-title {
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--netlify-dark);
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon {
+  width: 45px; height: 45px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: bold; font-size: 1.2rem;
 }
+.logo h1 { font-size: 1.5rem; color: var(--dark); }
+.logo span { color: var(--primary); }
 
-.countdown-card {
-  background: linear-gradient(135deg, #00C7B7 0%, #009688 100%);
-  color: white;
+/* Navigation Menu */
+.nav-menu {
+  display: flex;
+  gap: 5px;
+  background: #f9fafb;
+  padding: 5px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
 }
-.countdown-card .card-title { color: white; }
-
-.countdown-display {
-  text-align: center;
-  padding: 8px 12px 20px;
+.nav-link {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--gray);
+  border-radius: 4px;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
 }
+.nav-link:hover { color: var(--primary); background: #eff6ff; }
+.nav-link.active { color: white; background: var(--primary); }
 
-.countdown-timer {
+/* ==================== PAGE SECTIONS ==================== */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ==================== STATS BAR ==================== */
+.stats-bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
   margin-bottom: 20px;
 }
-
-.countdown-item {
-  background: rgba(255,255,255,0.18);
-  border-radius: 18px;
-  padding: 12px 6px;
-  backdrop-filter: blur(2px);
-}
-
-.countdown-value {
-  font-size: 1.8rem;
-  font-weight: 800;
-  display: block;
-  line-height: 1;
-}
-
-.countdown-label {
-  font-size: 0.65rem;
-  opacity: 0.85;
-  text-transform: uppercase;
-  margin-top: 6px;
-}
-
-.form-group { margin-bottom: 18px; }
-.form-label { font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; display: block; color: var(--netlify-dark);}
-.form-input, .form-select {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  font-size: 0.9rem;
-  transition: all 0.2s;
+.stat-card {
   background: white;
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  text-align: center;
+  border: 1px solid var(--border);
 }
-.form-input:focus, .form-select:focus {
-  outline: none;
-  border-color: var(--netlify-teal);
-  box-shadow: 0 0 0 3px rgba(0,199,183,0.15);
+.stat-value {
+  margin: 5px 0;
 }
+.stat-label { color: var(--gray); font-size: 0.9rem; }
+.stat-card.success .currency-primary { color: var(--success); }
+.stat-card.danger .currency-primary { color: var(--danger); }
+.stat-card.warning .currency-primary { color: var(--warning); }
 
-.currency-display {
-  background: #F8FAFC;
-  padding: 14px;
-  border-radius: 16px;
-  margin-top: 12px;
+/* ==================== MAIN GRID ==================== */
+.main-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
 }
+@media (max-width: 1024px) { .main-grid { grid-template-columns: 1fr; } }
 
-.currency-row {
+/* ==================== CARDS ==================== */
+.card {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 25px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.card-header {
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #E9EEF3;
-  font-size: 0.85rem;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
 }
-.currency-row:last-child { border: none; }
+.card-title { font-size: 1.3rem; font-weight: 600; color: var(--dark); }
 
+/* ==================== BUTTONS ==================== */
 .btn {
-  padding: 8px 18px;
-  border-radius: 40px;
-  font-weight: 500;
-  font-size: 0.85rem;
+  padding: 10px 20px;
   border: none;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: 0.95rem;
 }
-.btn-primary { background: var(--netlify-teal); color: white; }
-.btn-primary:hover { background: var(--netlify-teal-dark); transform: scale(0.97);}
-.btn-secondary { background: #F1F5F9; color: #1E293B; }
-.btn-danger { background: var(--netlify-danger); color: white; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-success { background: var(--success); color: white; }
+.btn-success:hover { background: #059669; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+.btn-outline:hover { background: #eff6ff; }
+.btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-danger:hover { background: #dc2626; }
 
-.table-container {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-table {
+/* ==================== FORMS ==================== */
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--dark); }
+.form-control {
   width: 100%;
-  border-collapse: collapse;
-  min-width: 680px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  background: white;
+  color: var(--dark);
 }
-th {
-  background: var(--netlify-light-gray);
-  padding: 14px 16px;
-  text-align: left;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--netlify-gray);
+.form-control:focus { outline: none; border-color: var(--primary); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+/* ==================== TABLES ==================== */
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+th { background: #f9fafb; font-weight: 600; color: var(--gray); font-size: 0.85rem; text-transform: uppercase; }
+tr:hover { background: #f9fafb; }
+.tr-overdue { background: #fef2f2; }
+.tr-overdue:hover { background: #fee2e2; }
+
+/* ==================== STATUS BADGES ==================== */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
   text-transform: uppercase;
 }
-td {
-  padding: 14px 16px;
-  border-bottom: 1px solid #EDF2F7;
-  font-size: 0.85rem;
-  vertical-align: middle;
-}
-.status-badge {
-  display: inline-flex;
-  padding: 4px 12px;
-  border-radius: 30px;
-  font-size: 0.7rem;
+.status-active { background: #d1fae5; color: #065f46; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-overdue { background: #fee2e2; color: #991b1b; }
+.status-completed { background: #dbeafe; color: #1e40af; }
+
+/* ==================== COUNTDOWN BADGE (ROW) ==================== */
+.countdown-badge {
   font-weight: 600;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
 }
-.status-active { background: rgba(16,185,129,0.1); color: #0E7B4E; }
-.status-completed { background: rgba(0,199,183,0.1); color: #0E6B62; }
+.countdown-safe { background: #f3f4f6; color: var(--dark); }
+.countdown-warning { background: #fef3c7; color: #92400e; }
+.countdown-danger { background: #fee2e2; color: #991b1b; font-weight: 700; }
 
-.progress-container { min-width: 130px; }
-.progress-bar { height: 6px; background: #E2E8F0; border-radius: 10px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--netlify-teal); width: 0%; border-radius: 10px; }
+/* ==================== CURRENCY DISPLAY STYLES ==================== */
+.currency-display {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+.currency-primary {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: -0.5px;
+}
+.currency-secondary {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--success);
+  background: #f0fdf4;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+td .currency-primary { font-size: 1rem; }
+td .currency-secondary { font-size: 0.7rem; }
+.stat-card .currency-primary { font-size: 1.5rem; }
+.stat-card .currency-secondary { font-size: 0.85rem; }
 
-.modal {
+/* ==================== PROGRESS BAR ==================== */
+.progress-bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ==================== MODALS ==================== */
+.receipt-modal {
   display: none;
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
   background: rgba(0,0,0,0.5);
-  align-items: center;
   justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(3px);
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
 }
-.modal.active { display: flex; }
-.modal-content {
+.receipt-modal.active { display: flex; }
+.receipt {
   background: white;
-  border-radius: 28px;
+  border-radius: var(--border-radius);
+  padding: 30px;
+  max-width: 600px;
   width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow: auto;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+  color: var(--dark);
 }
-.modal-header { padding: 20px 24px; border-bottom: 1px solid #EFF3F8; display: flex; justify-content: space-between; }
-.modal-body { padding: 24px; }
+.receipt-header {
+  text-align: center;
+  border-bottom: 2px dashed var(--border);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+.receipt-title { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.receipt-total {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--success);
+  margin: 15px 0;
+  padding-top: 15px;
+  border-top: 2px solid var(--dark);
+}
+.receipt-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
-.settings-item {
+/* ==================== CHART ==================== */
+.chart-container { height: 300px; position: relative; }
+
+/* ==================== TOAST ==================== */
+.toast {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: var(--dark);
+  color: white;
+  padding: 15px 25px;
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 2000;
+  animation: slideIn 0.3s ease;
+}
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* ==================== EMPTY STATE ==================== */
+.empty-state { text-align: center; padding: 40px; color: var(--gray); }
+.empty-state-icon { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; }
+
+/* ==================== LOADING ==================== */
+.loading {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border: 3px solid rgba(0,0,0,0.1);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s ease-in-out infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.hidden { display: none !important; }
+
+/* ==================== PRINT ==================== */
+@media print {
+  body * { visibility: hidden; }
+  .receipt, .receipt * { visibility: visible; }
+  .receipt {
+    position: absolute; left: 0; top: 0;
+    width: 100%; box-shadow: none;
+    border-radius: 0; background: white; color: black;
+    border: 1px solid #000;
+  }
+  .receipt-actions { display: none; }
+  header, .nav-menu, .btn { display: none; }
+}
+
+/* ==================== SETTINGS PAGE ==================== */
+.settings-section {
+  background: white;
+  border-radius: var(--border-radius);
+  padding: 25px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.settings-section h3 {
+  color: var(--primary);
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.setting-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #EDF2F7;
-  flex-wrap: wrap;
-  gap: 12px;
+  padding: 15px 0;
+  border-bottom: 1px solid #f3f4f6;
 }
-.toggle-switch {
-  position: relative;
-  width: 44px;
-  height: 24px;
-}
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #CBD5E1;
-  border-radius: 34px;
-  transition: 0.2s;
-}
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: 0.2s;
-}
-input:checked + .toggle-slider { background-color: var(--netlify-teal); }
-input:checked + .toggle-slider:before { transform: translateX(20px); }
+.setting-item:last-child { border-bottom: none; }
 
-@media (max-width: 1000px) {
-  .stats-grid { grid-template-columns: repeat(2,1fr); }
-  .content-grid { grid-template-columns: 1fr; }
+/* ==================== TABS ==================== */
+.tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
 }
-@media (max-width: 768px) {
-  .mobile-menu-toggle { display: block; }
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.active { transform: translateX(0); }
-  .main-content { margin-left: 0; padding: 80px 16px 24px; }
-  .stats-grid { grid-template-columns: 1fr; }
-  .countdown-timer { grid-template-columns: repeat(4,1fr); }
+.tab {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--gray);
+  border-radius: 6px 6px 0 0;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  border-bottom: none;
 }
+.tab.active { color: var(--primary); background: #eff6ff; border-color: var(--border); border-bottom: 1px solid white; margin-bottom: -1px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 </style>
 </head>
 <body>
-<button class="mobile-menu-toggle" onclick="window.toggleSidebar()"><i class="fas fa-bars"></i></button>
-<aside class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <div class="logo">
-      <img src="https://tv.directus.app/assets/ac4ea98a-a6ac-40c7-8c36-89c41992f27d" alt="logo" class="logo-img" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect fill=\'%2300C7B7\' width=\'100\' height=\'100\' rx=\'20\'/%3E%3Ctext x=\'50\' y=\'68\' font-size=\'48\' fill=\'white\' text-anchor=\'middle\' font-weight=\'bold\'%3EP%3C/text%3E%3C/svg%3E'">
-      <span>PayTrack</span>
-    </div>
+<div class="container">
+
+<!-- ==================== HEADER WITH NAVIGATION ==================== -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">PP</div>
+    <h1>Pay<span>Track</span>
   </div>
-  <nav class="sidebar-nav">
-    <button class="nav-item active" onclick="showPage('dashboard', this)"><i class="fas fa-home"></i><span>Dashboard</span></button>
-    <button class="nav-item" onclick="showPage('projects', this)"><i class="fas fa-folder-open"></i><span>Projects</span></button>
-    <button class="nav-item" onclick="showPage('payments', this)"><i class="fas fa-credit-card"></i><span>Payments</span></button>
-    <div class="nav-section">Management</div>
-    <button class="nav-item" onclick="showPage('reports', this)"><i class="fas fa-chart-bar"></i><span>Reports</span></button>
-    <button class="nav-item" onclick="showPage('settings', this)"><i class="fas fa-cog"></i><span>Settings</span></button>
-    <div class="nav-section">Support</div>
-    <button class="nav-item" onclick="showPage('help', this)"><i class="fas fa-question-circle"></i><span>Help Center</span></button>
+  <nav class="nav-menu">
+    <button class="nav-link active" onclick="navigateTo('dashboard')">📊 Dashboard</button>
+    <button class="nav-link" onclick="navigateTo('projects')">📋 Projects</button>
+    <button class="nav-link" onclick="navigateTo('transactions')">💰 Transactions</button>
+    <button class="nav-link" onclick="navigateTo('reports')">📈 Reports</button>
+    <button class="nav-link" onclick="navigateTo('settings')">⚙️ Settings</button>
   </nav>
-</aside>
+</header>
 
-<main class="main-content">
-  <!-- Dashboard -->
-  <div class="page active" id="page-dashboard">
-    <div class="page-header"><h1 class="page-title">Project Pay Tracker</h1><p class="page-subtitle">Track payments, deployments & countdowns</p></div>
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-label">Total Projects</div><div class="stat-value" id="totalProjects">0</div></div>
-      <div class="stat-card warning"><div class="stat-label">Pending Payments</div><div class="stat-value" id="pendingPayments">0</div></div>
-      <div class="stat-card success"><div class="stat-label">Completed</div><div class="stat-value" id="completedPayments">0</div></div>
-      <div class="stat-card danger"><div class="stat-label">Total Value</div><div class="stat-value" id="totalValue">$0</div><div class="stat-subvalue" id="totalValueUGX">UGX 0</div></div>
+<!-- ==================== PAGE: DASHBOARD ==================== -->
+<div id="dashboard" class="page active">
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-label">Total Revenue</div>
+      <div class="stat-value" id="totalRevenue"></div>
     </div>
-    <div class="content-grid">
-      <div><div class="card"><div class="card-header"><span class="card-title">📋 Project Payments</span><button class="btn btn-primary btn-sm" onclick="openModal('addProject')"><i class="fas fa-plus"></i> Add Project</button></div><div class="table-container"><table><thead><tr><th>Project</th><th>Period</th><th>Deployed</th><th>USD</th><th>UGX</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead><tbody id="projectTableBody"></tbody></table></div></div></div>
-      <div><div class="card countdown-card"><div class="card-header"><span class="card-title"><i class="fas fa-hourglass-half"></i> Next Payment</span></div><div class="card-body"><div class="countdown-display"><div class="countdown-timer"><div class="countdown-item"><span class="countdown-value" id="daysLeft">0</span><span class="countdown-label">Days</span></div><div class="countdown-item"><span class="countdown-value" id="hoursLeft">0</span><span class="countdown-label">Hours</span></div><div class="countdown-item"><span class="countdown-value" id="minutesLeft">0</span><span class="countdown-label">Mins</span></div><div class="countdown-item"><span class="countdown-value" id="secondsLeft">0</span><span class="countdown-label">Secs</span></div></div><div class="countdown-info" id="countdownInfo">⏳ Loading...</div></div></div></div>
-      <div class="card" style="margin-top: 20px;"><div class="card-header"><span class="card-title">⚡ Quick Add</span></div><div class="card-body"><input type="text" class="form-input" id="quickProjectName" placeholder="Project name"><input type="number" class="form-input mt-2" id="quickAmount" placeholder="Monthly amount (USD)" onchange="window.calculateQuickUGX()"><div class="currency-display"><div class="currency-row"><span>USD</span><span id="quickUSD">$0.00</span></div><div class="currency-row"><span>UGX</span><span id="quickUGX">UGX 0</span></div></div><button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="window.quickAdd()"><i class="fas fa-bolt"></i> Add to Tracker</button></div></div></div>
+    <div class="stat-card danger">
+      <div class="stat-label">Total Expenses</div>
+      <div class="stat-value" id="totalExpenses"></div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-label">Net Profit</div>
+      <div class="stat-value" id="netProfit"></div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-label">Pending Projects</div>
+      <div class="stat-value" id="pendingCount">0</div>
     </div>
   </div>
 
-  <!-- Projects Page -->
-  <div class="page" id="page-projects"><div class="page-header"><h1 class="page-title">All Projects</h1></div><div class="card"><div class="card-header"><span>📁 Project Management</span><button class="btn btn-primary" onclick="openModal('addProject')"><i class="fas fa-plus"></i> New Project</button></div><div class="table-container"><table><thead><tr><th>Project</th><th>Period</th><th>Deployed</th><th>End Date</th><th>USD/mo</th><th>Total UGX</th><th>Status</th><th>Actions</th></tr></thead><tbody id="projectTableBody2"></tbody></table></div></div></div>
+  <!-- Main Grid -->
+  <div class="main-grid">
+    <!-- Left Column -->
+    <div>
+      <!-- Projects Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Recent Projects</div>
+          <button class="btn btn-sm btn-outline" onclick="navigateTo('projects')">View All →</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr><th>Project</th><th>Client</th><th>Amount</th><th>Due Date</th><th>Time Remaining</th><th>Status</th></tr>
+            </thead>
+            <tbody id="dashboardProjectsTable">
+              <tr><td colspan="6" class="empty-state"><p>Loading projects...</p></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-  <!-- Payments (placeholder) -->
-  <div class="page" id="page-payments"><div class="page-header"><h1 class="page-title">Payment History</h1></div><div class="card"><div class="card-body text-center" style="padding:60px"><i class="fas fa-receipt" style="font-size:3rem; color:var(--netlify-teal)"></i><h3>No transactions yet</h3><p class="text-muted">Payments will appear after project completion.</p></div></div></div>
+      <!-- Recent Transactions -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💰 Recent Transactions</div>
+          <button class="btn btn-sm btn-outline" onclick="navigateTo('transactions')">View All →</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th></tr>
+            </thead>
+            <tbody id="dashboardTransactionsTable">
+              <tr><td colspan="4" class="empty-state"><p>No transactions yet</p></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-  <!-- Reports -->
-  <div class="page" id="page-reports"><div class="page-header"><h1 class="page-title">Reports</h1></div><div class="stats-grid"><div class="stat-card"><div class="stat-label">Total Paid (USD)</div><div class="stat-value" id="reportTotalUSD">$0</div></div><div class="stat-card"><div class="stat-label">Total Paid (UGX)</div><div class="stat-value" id="reportTotalUGX">UGX 0</div></div><div class="stat-card"><div class="stat-label">Avg Project Value</div><div class="stat-value" id="reportAverage">$0</div></div></div><div class="card"><div class="card-body"><button class="btn btn-primary" onclick="window.exportData()"><i class="fas fa-download"></i> Export JSON</button></div></div></div>
+    <!-- Right Column -->
+    <div>
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">⚡ Quick Actions</div></div>
+        <div style="display: grid; gap: 10px;">
+          <button class="btn btn-primary" onclick="openProjectModal()">📝 New Project</button>
+          <button class="btn btn-success" onclick="openTransactionModal()">💵 New Transaction</button>
+          <button class="btn btn-outline" onclick="navigateTo('reports')">📊 Export Report</button>
+        </div>
+      </div>
 
-  <!-- Settings -->
-  <div class="page" id="page-settings"><div class="page-header"><h1 class="page-title">Settings</h1></div><div class="card"><div class="card-body"><div class="settings-item"><div><div class="settings-label">USD → UGX Rate</div><div class="settings-description">1 USD = X UGX</div></div><input type="number" id="exchangeRate" value="3750" style="width:110px; padding:8px; border-radius:40px; border:1px solid #ddd;" onchange="window.updateExchangeRate()"></div><div class="settings-item"><div><div class="settings-label">Data Management</div></div><button class="btn btn-danger btn-sm" onclick="window.clearAllData()"><i class="fas fa-trash"></i> Clear All Projects</button></div></div></div></div>
+      <!-- Financial Summary -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">📈 Financial Summary</div></div>
+        <div style="display: grid; gap: 15px;">
+          <div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span>Monthly Target</span>
+              <strong id="monthlyTarget">UGX 18,500,000 <span style="font-size: 0.75rem; color: var(--success); background: #f0fdf4; padding: 2px 6px; border-radius: 4px;">$5,000</span></strong>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="targetProgress" style="width: 45%"></div></div>
+            <small style="color: var(--gray);" id="targetText">45% achieved</small>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; border: 1px solid #dcfce7;">
+              <div class="currency-display" id="incomeThisMonth"></div>
+              <div style="color: var(--gray); font-size: 0.9rem;">Income</div>
+            </div>
+            <div style="background: #fef2f2; padding: 15px; border-radius: 6px; border: 1px solid #fee2e2;">
+              <div class="currency-display" id="expensesThisMonth"></div>
+              <div style="color: var(--gray); font-size: 0.9rem;">Expenses</div>
+            </div>
+          </div>
+          <div style="border-top: 1px solid var(--border); padding-top: 15px;">
+            <div style="display: flex; justify-content: space-between; font-weight: 500;">
+              <span>Net Profit</span>
+              <span style="color: var(--success);" id="dashboardNetProfit"></span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <!-- Help -->
-  <div class="page" id="page-help"><div class="page-header"><h1 class="page-title">Help Center</h1></div><div class="card"><div class="card-body"><p><i class="fas fa-check-circle text-teal"></i> <strong>How to add?</strong> Click "Add Project", fill name, deploy date, period and monthly amount.<br><br>📅 Countdown shows nearest payment due date.<br>💰 UGX uses live exchange rate from settings.</p><hr><button class="btn btn-secondary mt-3"><i class="fas fa-envelope"></i> Contact Support</button></div></div></div>
-</main>
+      <!-- Upcoming Deadlines -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">⏰ Upcoming Deadlines</div></div>
+        <div id="upcomingList" style="display: grid; gap: 12px;">
+          <div style="text-align: center; color: var(--gray); padding: 20px;">No upcoming deadlines</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-<!-- Add/Edit Modal -->
-<div class="modal" id="addProjectModal"><div class="modal-content"><div class="modal-header"><h3 id="modalTitle">Add New Project</h3><button class="modal-close" onclick="closeModal('addProject')">&times;</button></div><div class="modal-body"><input type="hidden" id="editingProjectId"><div class="form-group"><label>Project Name *</label><input type="text" id="projectName" class="form-input" placeholder="e.g. SaaS Dashboard"></div><div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px"><div><label>Deployed Date</label><input type="date" id="deployDate" class="form-input"></div><div><label>Period (months)</label><select id="paymentPeriod" class="form-select" onchange="calculateTotalAmount()"><option value="1">1 Month</option><option value="2">2 Months</option><option value="3">3 Months</option><option value="6">6 Months</option><option value="12">12 Months</option></select></div></div><div class="form-group"><label>Monthly Amount (USD)</label><input type="number" id="monthlyAmount" class="form-input" step="0.01" onchange="calculateTotalAmount()"></div><div class="currency-display"><div class="currency-row"><span>Monthly</span><span id="displayMonthly">$0</span></div><div class="currency-row"><span>Total Period (USD)</span><span id="displayTotal">$0</span></div><div class="currency-row"><span>Total Period (UGX)</span><span id="displayTotalUGX">UGX 0</span></div></div></div><div class="modal-footer" style="padding:16px; display:flex; justify-content:flex-end; gap:12px"><button class="btn btn-secondary" onclick="closeModal('addProject')">Cancel</button><button class="btn btn-primary" id="btnSaveProject" onclick="handleSaveProject()"><i class="fas fa-save"></i> Save</button></div></div></div>
+<!-- ==================== PAGE: PROJECTS ==================== -->
+<div id="projects" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📋 All Projects</div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <select class="form-control" style="width: auto;" id="projectFilter" onchange="filterProjects()">
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+          <option value="overdue">Overdue</option>
+        </select>
+        <button class="btn btn-primary" onclick="openProjectModal()">+ New Project</button>
+      </div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr><th>Project</th><th>Client</th><th>Amount</th><th>Start Date</th><th>Due Date</th><th>Time Remaining</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="projectsTable">
+          <tr><td colspan="8" class="empty-state"><p>Loading projects...</p></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
+<!-- ==================== PAGE: TRANSACTIONS ==================== -->
+<div id="transactions" class="page">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">💰 All Transactions</div>
+      <button class="btn btn-success" onclick="openTransactionModal()">+ New Transaction</button>
+    </div>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Type</th><th>Project/Desc</th><th>Method</th><th>Amount</th><th>Reference</th><th>Receipt</th></tr>
+        </thead>
+        <tbody id="transactionsTable">
+          <tr><td colspan="7" class="empty-state"><p>Loading transactions...</p></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE: REPORTS ==================== -->
+<div id="reports" class="page">
+  <div class="main-grid">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📊 Revenue Analytics</div>
+        </div>
+        <div class="tabs">
+          <button class="tab active" onclick="switchReportTab('chart')">📈 Chart</button>
+          <button class="tab" onclick="switchReportTab('table')">📋 Table</button>
+        </div>
+        <div id="chartView" class="tab-content active">
+          <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+        <div id="tableView" class="tab-content">
+          <table>
+            <thead><tr><th>Month</th><th>Revenue (UGX)</th><th>Revenue (USD)</th></tr></thead>
+            <tbody id="revenueTableBody">
+              <tr><td colspan="3" class="empty-state"><p>No data available</p></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📥 Export Options</div></div>
+        <div style="display: grid; gap: 10px;">
+          <button class="btn btn-primary" onclick="exportData()">📊 Export JSON</button>
+          <button class="btn btn-success" onclick="printMonthlyReport()">🖨️ Print Monthly Report</button>
+          <button class="btn btn-outline" onclick="exportCSV()">📄 Export CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📈 Quick Stats</div></div>
+        <div style="display: grid; gap: 15px;">
+          <div class="stat-card">
+            <div class="stat-label">Total Projects</div>
+            <div class="stat-value" id="reportTotalProjects">0</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-label">Completion Rate</div>
+            <div class="stat-value" id="reportCompletionRate">0%</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-label">Avg Project Value</div>
+            <div class="stat-value" id="reportAvgValue"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE: SETTINGS ==================== -->
+<div id="settings" class="page">
+  <div class="settings-section">
+    <h3>💱 Currency Settings</h3>
+    <div class="setting-item">
+      <div>
+        <strong>Exchange Rate (USD to UGX)</strong>
+        <p style="color: var(--gray); font-size: 0.9rem;">Current rate used for conversions</p>
+      </div>
+      <input type="number" class="form-control" id="exchangeRate" value="3700" style="width: 150px;" onchange="updateExchangeRate()">
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>🗄️ Database Settings</h3>
+    <div class="setting-item">
+      <div>
+        <strong>Supabase Connection</strong>
+        <p style="color: var(--gray); font-size: 0.9rem;">Database connection status</p>
+      </div>
+      <span class="status-badge status-active" id="dbStatus">Connected</span>
+    </div>
+    <div class="setting-item">
+      <div>
+        <strong>Sync Data</strong>
+        <p style="color: var(--gray); font-size: 0.9rem;">Refresh data from database</p>
+      </div>
+      <button class="btn btn-outline" onclick="refreshData()">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <h3>ℹ️ About</h3>
+    <div style="color: var(--gray); line-height: 1.8;">
+      <p><strong>ProjectPay Tracker</strong> v3.0</p>
+      <p>White Theme • UGX Primary Display • Expense Tracking</p>
+      <p style="margin-top: 10px;">Built with Supabase • Chart.js • Vanilla JavaScript</p>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ==================== PROJECT MODAL ==================== -->
+<div class="receipt-modal" id="projectModal">
+  <div class="receipt" style="max-width: 600px;">
+    <div class="receipt-header"><div class="receipt-title">📝 New Project</div></div>
+    <form id="projectForm" onsubmit="saveProject(event)">
+      <div class="form-group">
+        <label>Project Name *</label>
+        <input type="text" class="form-control" id="projectName" required placeholder="e.g., Website Redesign">
+      </div>
+      <div class="form-group">
+        <label>Client Name *</label>
+        <input type="text" class="form-control" id="clientName" required placeholder="Client or Company">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount (USD) *</label>
+          <input type="number" class="form-control" id="projectAmount" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label>Duration</label>
+          <select class="form-control" id="projectDuration" onchange="calculateDueDate()">
+            <option value="1m">1 Month</option>
+            <option value="2m">2 Months</option>
+            <option value="3m">3 Months</option>
+            <option value="1y">1 Year</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date *</label>
+          <input type="date" class="form-control" id="startDate" required>
+        </div>
+        <div class="form-group">
+          <label>Due Date *</label>
+          <input type="date" class="form-control" id="dueDate" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" id="projectDesc" rows="3" placeholder="Project details..."></textarea>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('projectModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="saveProjectBtn">Save Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== TRANSACTION MODAL ==================== -->
+<div class="receipt-modal" id="transactionModal">
+  <div class="receipt" style="max-width: 500px;">
+    <div class="receipt-header"><div class="receipt-title">💵 New Transaction</div></div>
+    <form id="transactionForm" onsubmit="recordTransaction(event)">
+      <div class="form-group">
+        <label>Transaction Type *</label>
+        <select class="form-control" id="txnType" onchange="toggleProjectSelect()" required>
+          <option value="income">Income (Payment)</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
+      <div class="form-group" id="projectSelectGroup">
+        <label>Select Project (Optional for Expenses)</label>
+        <select class="form-control" id="txnProject">
+          <option value="">-- General Transaction --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Amount (USD) *</label>
+        <input type="number" class="form-control" id="txnAmount" step="0.01" min="0" required>
+      </div>
+      <div class="form-group">
+        <label>Method / Category</label>
+        <select class="form-control" id="txnMethod">
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="paypal">PayPal</option>
+          <option value="cash">Cash</option>
+          <option value="software">Software/Tools</option>
+          <option value="utilities">Utilities</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Description / Reference</label>
+        <input type="text" class="form-control" id="txnRef" placeholder="e.g. Office Supplies">
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-outline" onclick="closeModal('transactionModal')">Cancel</button>
+        <button type="submit" class="btn btn-success" id="txnSubmitBtn">Save Transaction</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== RECEIPT MODAL ==================== -->
+<div class="receipt-modal" id="receiptModal">
+  <div class="receipt" id="printableReceipt">
+    <div class="receipt-header">
+      <div class="receipt-title">🧾 RECEIPT</div>
+      <div style="color: var(--gray); margin-top: 5px;" id="receiptDate"></div>
+    </div>
+    <div class="receipt-row"><span><strong>Receipt #</strong></span><span id="receiptNumber">REC-000000</span></div>
+    <div class="receipt-row"><span><strong>Type</strong></span><span id="receiptType">-</span></div>
+    <div class="receipt-row"><span><strong>Description</strong></span><span id="receiptProject">-</span></div>
+    <div class="receipt-row"><span><strong>Method</strong></span><span id="receiptMethod">-</span></div>
+    <div class="receipt-total">
+      <div class="currency-display" style="align-items: flex-end;">
+        <div class="currency-primary" id="receiptAmountUGX" style="font-size: 1.5rem;">UGX 0</div>
+        <div class="currency-secondary" id="receiptAmountUSD" style="font-size: 1rem;">$0.00</div>
+      </div>
+    </div>
+    <div style="text-align: center; margin: 25px 0; color: var(--gray); font-size: 0.9rem;">
+      <p>Thank you!</p>
+      <p style="margin-top: 5px;">ProjectPay Tracker • <span id="receiptTimestamp"></span></p>
+    </div>
+    <div class="receipt-actions">
+      <button class="btn btn-primary" onclick="printReceipt()">🖨️ Print</button>
+      <button class="btn btn-outline" onclick="closeModal('receiptModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOAST ==================== -->
+<div id="toast" class="toast hidden"><span id="toastMessage"></span></div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
 <script>
-// ==================== SUPABASE CONFIG ====================
-const SUPABASE_URL = 'https://bqfsadxyppqkedkimnnh.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxZnNhZHh5cHBxa2Vka2ltbm5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDQ0NzEsImV4cCI6MjA5MDAyMDQ3MX0.TcWv7CIjctJ_BozxnTzs_ckLeQxrMsOXL8r25qf3bwE';
-
+// ==================== GLOBAL VARIABLES ====================
+const SUPABASE_URL = 'https://bqfsadxyppqkedkimnnh.supabase.co'.trim();
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxZnNhZHh5cHBxa2Vka2ltbm5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDQ0NzEsImV4cCI6MjA5MDAyMDQ3MX0.TcWv7CIjctJ_BozxnTzs_ckLeQxrMsOXL8r25qf3bwE'.trim();
+let USD_TO_UGX_RATE = 3700;
 let supabaseClient = null;
-let exchangeRate = 3750;
 let projects = [];
-let editingId = null;
+let transactions = [];
+let revenueChart = null;
+let countdownInterval = null;
 
-// Init supabase after DOM
-async function initSupabase() {
-  if (window.supabase) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log("✅ Supabase ready");
-    await loadExchangeRate();
-    await fetchProjects();
-    renderAll();
-    startCountdownLoop();
-  } else {
-    console.error("Supabase missing");
+// ==================== NAVIGATION ====================
+function navigateTo(pageId) {
+  document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+  event.target.classList.add('active');
+  if (pageId === 'reports') {
+    setTimeout(() => { if (revenueChart) revenueChart.update(); }, 100);
   }
 }
 
-// Data operations
-async function fetchProjects() {
-  if (!supabaseClient) return;
-  const { data, error } = await supabaseClient.from('projects').select('*').order('created_at', { ascending: false });
-  if (!error) projects = data || [];
-  else console.error(error);
+function switchReportTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(tabName + 'View').classList.add('active');
 }
 
-async function handleSaveProject() {
-  if (!supabaseClient) return alert("DB not connected");
-  const name = document.getElementById('projectName').value.trim();
-  const deployDate = document.getElementById('deployDate').value;
-  const period = parseInt(document.getElementById('paymentPeriod').value);
-  const monthly = parseFloat(document.getElementById('monthlyAmount').value);
-  if (!name || !deployDate || isNaN(monthly)) return alert("Fill all required fields");
-  const totalAmount = monthly * period;
-  const totalUGX = totalAmount * exchangeRate;
-  const endDate = addMonths(deployDate, period);
-  const payload = { name, deploy_date: deployDate, end_date: endDate, period, monthly_amount: monthly, total_amount: totalAmount, total_ugx: totalUGX, status: 'active', progress: 0 };
-  try {
-    if (editingId) {
-      await supabaseClient.from('projects').update(payload).eq('id', editingId);
-    } else {
-      await supabaseClient.from('projects').insert([payload]);
-    }
-    await fetchProjects();
-    renderAll();
-    closeModal('addProject');
-    resetModalForm();
-  } catch (err) { alert("Error saving project"); console.error(err); }
+// ==================== CURRENCY UTILITIES ====================
+function formatDualCurrency(usdAmount) {
+  const ugxAmount = usdAmount * USD_TO_UGX_RATE;
+  return `
+    <div class="currency-display">
+      <div class="currency-primary">UGX ${ugxAmount.toLocaleString('en-UG', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</div>
+      <div class="currency-secondary">$${usdAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+    </div>
+  `;
 }
 
-async function deleteProject(id) {
-  if (!confirm("Permanently delete project?")) return;
-  await supabaseClient.from('projects').delete().eq('id', id);
-  await fetchProjects();
-  renderAll();
+function formatCurrencyHTML(usdAmount) {
+  const ugxAmount = usdAmount * USD_TO_UGX_RATE;
+  return `
+    <div class="currency-display">
+      <div class="currency-primary">UGX ${ugxAmount.toLocaleString('en-UG')}</div>
+      <div class="currency-secondary">$${usdAmount.toLocaleString('en-US', {minimumFractionDigits: 0})}</div>
+    </div>
+  `;
 }
 
-function editProject(proj) {
-  editingId = proj.id;
-  document.getElementById('projectName').value = proj.name;
-  document.getElementById('deployDate').value = proj.deploy_date;
-  document.getElementById('paymentPeriod').value = proj.period;
-  document.getElementById('monthlyAmount').value = proj.monthly_amount;
-  document.getElementById('modalTitle').innerText = 'Edit Project';
-  calculateTotalAmount();
-  openModal('addProject');
+function formatUSD(usdAmount) {
+  return `$${usdAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 }
 
-async function quickAdd() {
-  if (!supabaseClient) return;
-  const name = document.getElementById('quickProjectName').value.trim();
-  const amount = parseFloat(document.getElementById('quickAmount').value);
-  if (!name || isNaN(amount)) return alert("Enter name and amount");
-  const today = new Date().toISOString().slice(0,10);
-  const endDate = addMonths(today, 1);
-  const totalUGX = amount * exchangeRate;
-  const payload = { name, deploy_date: today, end_date: endDate, period: 1, monthly_amount: amount, total_amount: amount, total_ugx: totalUGX, status: 'active' };
-  await supabaseClient.from('projects').insert([payload]);
-  await fetchProjects();
-  renderAll();
-  document.getElementById('quickProjectName').value = '';
-  document.getElementById('quickAmount').value = '';
-  calculateQuickUGX();
+function formatUGX(usdAmount) {
+  const ugxAmount = usdAmount * USD_TO_UGX_RATE;
+  return `UGX ${ugxAmount.toLocaleString('en-UG', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
 }
 
-// Helper functions
-function addMonths(dateStr, months) { let d = new Date(dateStr); d.setMonth(d.getMonth() + months); return d.toISOString().slice(0,10); }
-function calculateProgress(deploy, end) { const now = new Date(); const startDate = new Date(deploy); const endDate = new Date(end); if (now >= endDate) return 100; if (now <= startDate) return 0; const total = endDate - startDate; const elapsed = now - startDate; return Math.floor((elapsed / total) * 100); }
-
-function renderAll() {
-  renderDashboardTable();
+function updateExchangeRate() {
+  USD_TO_UGX_RATE = parseFloat(document.getElementById('exchangeRate').value) || 3700;
+  showToast('Exchange rate updated!');
+  updateStats();
   renderProjectsTable();
-  updateStatsAndReports();
+  renderTransactionsTable();
 }
 
-function renderDashboardTable() {
-  const tbody = document.getElementById('projectTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = projects.map(p => {
-    const progress = calculateProgress(p.deploy_date, p.end_date);
-    const statusClass = progress >= 100 ? 'status-completed' : 'status-active';
-    const statusText = progress >= 100 ? 'Completed' : 'Active';
-    const daysLeft = Math.ceil((new Date(p.end_date) - new Date()) / (86400000));
-    return `<tr><td><strong>${escapeHtml(p.name)}</strong></td><td>${p.period} mo</td><td>${formatDate(p.deploy_date)}</td><td>$${p.monthly_amount.toFixed(2)}</td><td>UGX ${(p.total_ugx/1000).toFixed(0)}k</td><td><span class="status-badge ${statusClass}">${statusText}</span></td><td><div class="progress-container"><div class="progress-label"><span>${progress}%</span><span>${daysLeft>0?daysLeft+'d':'due'}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div></div></td><td><div class="action-buttons"><button class="btn btn-secondary btn-sm" onclick='editProject(${JSON.stringify(p).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id})"><i class="fas fa-trash"></i></button></div></td></tr>`;
-  }).join('');
-  if(projects.length===0) tbody.innerHTML='<tr><td colspan="8" class="text-center" style="padding:40px">✨ No projects yet. Click "Add Project"</td></tr>';
+// ==================== INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', async () => {
+  initSupabase();
+  setDefaultDates();
+  loadProjects();
+  loadTransactions();
+  startCountdownTimer();
+  initChart();
+});
+
+function initSupabase() {
+  try {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('✅ Supabase initialized');
+    document.getElementById('dbStatus').textContent = 'Connected';
+    document.getElementById('dbStatus').className = 'status-badge status-active';
+  } catch (error) {
+    console.error('❌ Supabase error:', error);
+    document.getElementById('dbStatus').textContent = 'Disconnected';
+    document.getElementById('dbStatus').className = 'status-badge status-overdue';
+    loadDemoData();
+  }
 }
 
-function renderProjectsTable() {
-  const tbody2 = document.getElementById('projectTableBody2');
-  if(!tbody2) return;
-  tbody2.innerHTML = projects.map(p => {
-    const progress = calculateProgress(p.deploy_date, p.end_date);
-    const statusClass = progress>=100 ? 'status-completed' : 'status-active';
-    return `<tr><td><strong>${escapeHtml(p.name)}</strong></td><td>${p.period} mo</td><td>${formatDate(p.deploy_date)}</td><td>${formatDate(p.end_date)}</td><td>$${p.monthly_amount.toFixed(2)}</td><td>UGX ${p.total_ugx.toLocaleString()}</td><td><span class="status-badge ${statusClass}">${progress>=100?'Completed':'Active'}</span></td><td><button class="btn btn-secondary btn-sm" onclick='editProject(${JSON.stringify(p).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i></button> <button class="btn btn-danger btn-sm" onclick="deleteProject(${p.id})"><i class="fas fa-trash"></i></button></td></tr>`;
-  }).join('');
-  if(projects.length===0) tbody2.innerHTML='<tr><td colspan="8" style="padding:40px; text-align:center">No projects</td></tr>';
+function setDefaultDates() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('startDate').value = today;
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  document.getElementById('dueDate').value = nextMonth.toISOString().split('T')[0];
 }
 
-function updateStatsAndReports() {
-  const total = projects.length;
-  const completed = projects.filter(p => calculateProgress(p.deploy_date, p.end_date) >= 100).length;
-  const pending = total - completed;
-  const totalUSD = projects.reduce((s,p)=> s + p.total_amount,0);
-  const totalUGX = totalUSD * exchangeRate;
-  document.getElementById('totalProjects').innerText = total;
-  document.getElementById('pendingPayments').innerText = pending;
-  document.getElementById('completedPayments').innerText = completed;
-  document.getElementById('totalValue').innerText = '$' + totalUSD.toLocaleString(undefined,{minimumFractionDigits:2});
-  document.getElementById('totalValueUGX').innerText = 'UGX ' + totalUGX.toLocaleString();
-  document.getElementById('reportTotalUSD').innerText = '$' + totalUSD.toLocaleString(undefined,{minimumFractionDigits:2});
-  document.getElementById('reportTotalUGX').innerText = 'UGX ' + totalUGX.toLocaleString();
-  const avg = total ? totalUSD/total : 0;
-  document.getElementById('reportAverage').innerText = '$' + avg.toFixed(2);
+function calculateDueDate() {
+  const duration = document.getElementById('projectDuration').value;
+  const startDate = new Date(document.getElementById('startDate').value);
+  if (!startDate || duration === 'custom') return;
+  let dueDate = new Date(startDate);
+  switch(duration) {
+    case '1m': dueDate.setMonth(dueDate.getMonth() + 1); break;
+    case '2m': dueDate.setMonth(dueDate.getMonth() + 2); break;
+    case '3m': dueDate.setMonth(dueDate.getMonth() + 3); break;
+    case '1y': dueDate.setFullYear(dueDate.getFullYear() + 1); break;
+  }
+  document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
 }
 
-let countdownInterval;
-function startCountdownLoop() {
-  if(countdownInterval) clearInterval(countdownInterval);
+// ==================== MODAL FUNCTIONS ====================
+function openProjectModal() {
+  document.getElementById('projectForm').reset();
+  setDefaultDates();
+  document.getElementById('projectModal').classList.add('active');
+}
+
+function openTransactionModal() {
+  populateProjectSelect();
+  document.getElementById('transactionForm').reset();
+  document.getElementById('txnType').value = 'income';
+  toggleProjectSelect();
+  document.getElementById('transactionModal').classList.add('active');
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
+}
+
+function toggleProjectSelect() {
+  const type = document.getElementById('txnType').value;
+  const group = document.getElementById('projectSelectGroup');
+  const select = document.getElementById('txnProject');
+  if (type === 'expense') {
+    select.required = false;
+    group.style.opacity = '0.6';
+  } else {
+    select.required = false;
+    group.style.opacity = '1';
+  }
+}
+
+// ==================== DATA LOADING ====================
+async function loadProjects() {
+  try {
+    const { data, error } = await supabaseClient.from('projects').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    projects = data || [];
+    renderDashboardProjects();
+    renderProjectsTable();
+    updateStats();
+    updateUpcomingDeadlines();
+    updateReportStats();
+  } catch (error) {
+    console.error('Load projects error:', error);
+    loadDemoData();
+  }
+}
+
+async function loadTransactions() {
+  try {
+    const { data, error } = await supabaseClient.from('transactions').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    transactions = data || [];
+    renderDashboardTransactions();
+    renderTransactionsTable();
+  } catch (error) {
+    console.error('Load transactions error:', error);
+  }
+}
+
+function loadDemoData() {
+  projects = [
+    { id: 'demo-1', name: 'Website Redesign', client: 'Acme Corp', amount: 2500, start_date: '2024-01-15', due_date: '2024-02-15', status: 'active', description: 'Complete website overhaul' },
+    { id: 'demo-2', name: 'Mobile App', client: 'TechStart', amount: 5000, start_date: '2024-01-01', due_date: '2024-04-01', status: 'pending', description: 'iOS and Android app' },
+    { id: 'demo-3', name: 'SEO Campaign', client: 'Local Biz', amount: 800, start_date: '2023-12-01', due_date: '2024-01-01', status: 'overdue', description: '3-month SEO campaign' }
+  ];
+  transactions = [
+    { id: 'txn-1', project_id: 'demo-1', amount: 1250, type: 'income', method: 'bank_transfer', reference: 'TXN-ABC123', date: '2024-01-20' },
+    { id: 'txn-2', project_id: '', amount: 200, type: 'expense', method: 'software', reference: 'Adobe CC', date: '2024-01-05' }
+  ];
+  renderDashboardProjects();
+  renderDashboardTransactions();
+  renderProjectsTable();
+  renderTransactionsTable();
+  updateStats();
+  updateUpcomingDeadlines();
+  updateReportStats();
+}
+
+// ==================== COUNTDOWN LOGIC (PER ROW) ====================
+function getCountdownBadge(dueDate) {
+  const due = new Date(dueDate);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  due.setHours(0,0,0,0);
+  const diffTime = due - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) {
+    return `<span class="countdown-badge countdown-danger">⚠️ OVERDUE (${Math.abs(diffDays)}d)</span>`;
+  } else if (diffDays <= 7) {
+    return `<span class="countdown-badge countdown-warning">⚡ ${diffDays} days left</span>`;
+  } else {
+    return `<span class="countdown-badge countdown-safe">${diffDays} days</span>`;
+  }
+}
+
+function startCountdownTimer() {
+  if (countdownInterval) clearInterval(countdownInterval);
   countdownInterval = setInterval(() => {
-    const active = projects.filter(p => calculateProgress(p.deploy_date, p.end_date) < 100);
-    if(active.length===0){
-      document.getElementById('daysLeft').innerText='0';document.getElementById('hoursLeft').innerText='0';document.getElementById('minutesLeft').innerText='0';document.getElementById('secondsLeft').innerText='0';
-      document.getElementById('countdownInfo').innerHTML = '🎉 All payments completed';
-      return;
-    }
-    const nearest = active.reduce((a,b)=> new Date(a.end_date) < new Date(b.end_date) ? a : b);
-    const diff = new Date(nearest.end_date) - new Date();
-    if(diff<=0){
-      document.getElementById('countdownInfo').innerHTML = `⚠️ Payment due for ${nearest.name}`;
-      return;
-    }
-    const days = Math.floor(diff/86400000);
-    const hours = Math.floor((diff%86400000)/3600000);
-    const mins = Math.floor((diff%3600000)/60000);
-    const secs = Math.floor((diff%60000)/1000);
-    document.getElementById('daysLeft').innerText = days;
-    document.getElementById('hoursLeft').innerText = hours.toString().padStart(2,'0');
-    document.getElementById('minutesLeft').innerText = mins.toString().padStart(2,'0');
-    document.getElementById('secondsLeft').innerText = secs.toString().padStart(2,'0');
-    document.getElementById('countdownInfo').innerHTML = `<i class="fas fa-calendar-alt"></i> ${nearest.name} · ends ${formatDate(nearest.end_date)}`;
-  }, 500);
+    renderProjectsTable();
+    renderDashboardProjects();
+  }, 60000);
 }
 
-function calculateTotalAmount() {
-  const monthly = parseFloat(document.getElementById('monthlyAmount').value)||0;
-  const period = parseInt(document.getElementById('paymentPeriod').value);
-  const total = monthly*period;
-  document.getElementById('displayMonthly').innerText = '$'+monthly.toFixed(2);
-  document.getElementById('displayTotal').innerText = '$'+total.toFixed(2);
-  document.getElementById('displayTotalUGX').innerText = 'UGX ' + (total*exchangeRate).toLocaleString();
+// ==================== RENDERING - DASHBOARD ====================
+function renderDashboardProjects() {
+  const tbody = document.getElementById('dashboardProjectsTable');
+  if (projects.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>No projects yet</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = projects.slice(0, 5).map(project => {
+    const status = getProjectStatus(project);
+    const isOverdue = status === 'overdue';
+    return `
+      <tr class="${isOverdue ? 'tr-overdue' : ''}">
+        <td><strong>${escapeHtml(project.name)}</strong></td>
+        <td>${escapeHtml(project.client)}</td>
+        <td>${formatDualCurrency(project.amount || 0)}</td>
+        <td>${new Date(project.due_date).toLocaleDateString()}</td>
+        <td>${getCountdownBadge(project.due_date)}</td>
+        <td><span class="status-badge status-${status}">${status.toUpperCase()}</span></td>
+      </tr>
+    `;
+  }).join('');
 }
-function calculateQuickUGX(){ const usd=parseFloat(document.getElementById('quickAmount').value)||0; document.getElementById('quickUSD').innerText='$'+usd.toFixed(2); document.getElementById('quickUGX').innerText='UGX '+(usd*exchangeRate).toLocaleString();}
-function updateExchangeRate(){ exchangeRate = parseFloat(document.getElementById('exchangeRate').value)||3750; localStorage.setItem('payTrackExchangeRate', exchangeRate); renderAll(); }
-async function loadExchangeRate(){ const saved=localStorage.getItem('payTrackExchangeRate'); if(saved){ exchangeRate=parseFloat(saved); document.getElementById('exchangeRate').value=exchangeRate;} }
-function exportData(){ const dataStr=JSON.stringify(projects,null,2); const blob=new Blob([dataStr],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`paytrack-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);}
-async function clearAllData(){ if(!confirm('⚠️ Delete ALL projects permanently?')) return; await supabaseClient.from('projects').delete().neq('id',0); await fetchProjects(); renderAll(); }
-function formatDate(str){ if(!str) return '—'; return new Date(str).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}); }
-function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;});}
-function resetModalForm(){ editingId=null; document.getElementById('editingProjectId').value=''; document.getElementById('projectName').value=''; document.getElementById('monthlyAmount').value=''; document.getElementById('modalTitle').innerText='Add New Project'; const today=new Date().toISOString().slice(0,10); document.getElementById('deployDate').value=today; document.getElementById('deployDate').min=today; calculateTotalAmount();}
-function openModal(){ document.getElementById('addProjectModal').classList.add('active'); if(!editingId) resetModalForm();}
-function closeModal(){ document.getElementById('addProjectModal').classList.remove('active'); resetModalForm();}
-function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('active');}
-function showPage(page, btn){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(`page-${page}`).classList.add('active'); document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active')); if(btn) btn.classList.add('active'); if(window.innerWidth<=768) document.getElementById('sidebar').classList.remove('active'); if(page==='reports'||page==='dashboard') updateStatsAndReports(); }
 
-window.toggleSidebar=toggleSidebar; window.showPage=showPage; window.openModal=openModal; window.closeModal=closeModal; window.handleSaveProject=handleSaveProject; window.deleteProject=deleteProject; window.editProject=editProject; window.quickAdd=quickAdd; window.calculateQuickUGX=calculateQuickUGX; window.calculateTotalAmount=calculateTotalAmount; window.updateExchangeRate=updateExchangeRate; window.exportData=exportData; window.clearAllData=clearAllData;
+function renderDashboardTransactions() {
+  const tbody = document.getElementById('dashboardTransactionsTable');
+  if (transactions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><p>No transactions yet</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = transactions.slice(0, 5).map(txn => {
+    const project = projects.find(p => p.id === txn.project_id);
+    const desc = project ? project.name : (txn.reference || 'General');
+    const color = txn.type === 'expense' ? 'var(--danger)' : 'var(--success)';
+    const sign = txn.type === 'expense' ? '-' : '+';
+    return `
+      <tr>
+        <td>${new Date(txn.date).toLocaleDateString()}</td>
+        <td><span class="status-badge status-${txn.type === 'expense' ? 'overdue' : 'active'}">${txn.type}</span></td>
+        <td>${escapeHtml(desc)}</td>
+        <td style="color: ${color}; font-weight: 500;">${sign}${formatDualCurrency(txn.amount || 0)}</td>
+      </tr>
+    `;
+  }).join('');
+}
 
-document.addEventListener('DOMContentLoaded', ()=>{ initSupabase(); resetModalForm(); setInterval(renderAll, 2000); });
+// ==================== RENDERING - PROJECTS PAGE ====================
+function renderProjectsTable(filter = 'all') {
+  const tbody = document.getElementById('projectsTable');
+  let filtered = projects;
+  if (filter !== 'all') {
+    filtered = projects.filter(p => {
+      if (filter === 'active') return p.status === 'active';
+      if (filter === 'pending') return p.status === 'pending';
+      if (filter === 'completed') return p.status === 'completed';
+      if (filter === 'overdue') return getProjectStatus(p) === 'overdue';
+      return true;
+    });
+  }
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><p>No projects found</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(project => {
+    const status = getProjectStatus(project);
+    const isOverdue = status === 'overdue';
+    return `
+      <tr class="${isOverdue ? 'tr-overdue' : ''}">
+        <td><strong>${escapeHtml(project.name)}</strong><br><small style="color: var(--gray);">${escapeHtml(project.description || '')}</small></td>
+        <td>${escapeHtml(project.client)}</td>
+        <td>${formatDualCurrency(project.amount || 0)}</td>
+        <td>${new Date(project.start_date).toLocaleDateString()}</td>
+        <td>${new Date(project.due_date).toLocaleDateString()}</td>
+        <td>${getCountdownBadge(project.due_date)}</td>
+        <td><span class="status-badge status-${status}">${status.toUpperCase()}</span></td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="openPaymentModalForProject('${project.id}')">💵 Pay</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteProject('${project.id}')" style="margin-left: 5px;">🗑️</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterProjects() {
+  const filter = document.getElementById('projectFilter').value;
+  renderProjectsTable(filter);
+}
+
+// ==================== RENDERING - TRANSACTIONS PAGE ====================
+function renderTransactionsTable() {
+  const tbody = document.getElementById('transactionsTable');
+  if (transactions.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><p>No transactions yet</p></td></tr>';
+    return;
+  }
+  tbody.innerHTML = transactions.map(txn => {
+    const project = projects.find(p => p.id === txn.project_id);
+    const desc = project ? project.name : (txn.reference || 'General');
+    const color = txn.type === 'expense' ? 'var(--danger)' : 'var(--success)';
+    const sign = txn.type === 'expense' ? '-' : '+';
+    return `
+      <tr>
+        <td>${new Date(txn.date).toLocaleDateString()}</td>
+        <td><span class="status-badge status-${txn.type === 'expense' ? 'overdue' : 'active'}">${txn.type}</span></td>
+        <td>${escapeHtml(desc)}</td>
+        <td>${txn.method?.replace('_', ' ') || 'N/A'}</td>
+        <td style="color: ${color}; font-weight: 500;">${sign}${formatDualCurrency(txn.amount || 0)}</td>
+        <td>${txn.reference || 'N/A'}</td>
+        <td><button class="btn btn-sm btn-outline" onclick="viewReceipt('${txn.id}')">🧾 View</button></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ==================== PROJECT STATUS ====================
+function getProjectStatus(project) {
+  if (project.status === 'completed') return 'completed';
+  const dueDate = new Date(project.due_date);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  if (dueDate < today) return 'overdue';
+  if (project.status === 'pending') return 'pending';
+  return 'active';
+}
+
+// ==================== PAYMENT / TRANSACTION ====================
+function populateProjectSelect() {
+  const select = document.getElementById('txnProject');
+  select.innerHTML = '<option value="">-- General Transaction --</option>';
+  projects.filter(p => p.status !== 'completed').forEach(project => {
+    const option = document.createElement('option');
+    option.value = project.id;
+    option.textContent = `${project.name} (${escapeHtml(project.client)})`;
+    select.appendChild(option);
+  });
+}
+
+function openPaymentModalForProject(projectId) {
+  populateProjectSelect();
+  document.getElementById('txnProject').value = projectId;
+  document.getElementById('txnType').value = 'income';
+  toggleProjectSelect();
+  document.getElementById('transactionModal').classList.add('active');
+}
+
+async function saveProject(event) {
+  event.preventDefault();
+  const btn = document.getElementById('saveProjectBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<span class="loading"></span> Saving...';
+  btn.disabled = true;
+  
+  const project = {
+    name: document.getElementById('projectName').value,
+    client: document.getElementById('clientName').value,
+    amount: parseFloat(document.getElementById('projectAmount').value),
+    start_date: document.getElementById('startDate').value,
+    due_date: document.getElementById('dueDate').value,
+    description: document.getElementById('projectDesc').value,
+    status: 'active',
+    created_at: new Date().toISOString()
+  };
+  
+  try {
+    const { data, error } = await supabaseClient.from('projects').insert([project]).select().single();
+    if (error) throw error;
+    showToast('Project created successfully!');
+    closeModal('projectModal');
+    loadProjects();
+  } catch (error) {
+    showToast('Failed to save project: ' + error.message, 'error');
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+async function recordTransaction(event) {
+  event.preventDefault();
+  const btn = document.getElementById('txnSubmitBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '<span class="loading"></span> Saving...';
+  btn.disabled = true;
+
+  const projectId = document.getElementById('txnProject').value;
+  const amount = parseFloat(document.getElementById('txnAmount').value);
+  const type = document.getElementById('txnType').value;
+  const method = document.getElementById('txnMethod').value;
+  const reference = document.getElementById('txnRef').value;
+  
+  const transaction = {
+    project_id: projectId || null,
+    amount: amount,
+    type: type,
+    method: method,
+    reference: reference,
+    date: new Date().toISOString().split('T')[0],
+    created_at: new Date().toISOString()
+  };
+  
+  try {
+    if (supabaseClient) {
+      const { error } = await supabaseClient.from('transactions').insert([transaction]);
+      if (error) throw error;
+    }
+    transaction.id = `txn-${Date.now()}`;
+    transactions.unshift(transaction);
+    
+    if (type === 'income' && projectId) {
+      const project = projects.find(p => p.id === projectId);
+      if (project) {
+        const paid = transactions.filter(t => t.project_id === projectId && t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+        if (paid >= project.amount) {
+          project.status = 'completed';
+          if (supabaseClient) {
+            await supabaseClient.from('projects').update({ status: 'completed' }).eq('id', projectId);
+          }
+        }
+      }
+    }
+    
+    generateReceipt(transaction);
+    closeModal('transactionModal');
+    renderDashboardTransactions();
+    renderTransactionsTable();
+    updateStats();
+    showToast('Transaction recorded successfully!');
+  } catch (error) {
+    showToast('Failed to record transaction: ' + error.message, 'error');
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+function generateReceipt(transaction) {
+  const now = new Date();
+  const project = projects.find(p => p.id === transaction.project_id);
+  document.getElementById('receiptNumber').textContent = 'REC-' + Date.now().toString().slice(-6);
+  document.getElementById('receiptDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('receiptType').textContent = transaction.type.toUpperCase();
+  document.getElementById('receiptProject').textContent = project ? project.name : (transaction.reference || 'General');
+  document.getElementById('receiptMethod').textContent = transaction.method.replace('_', ' ').toUpperCase();
+  document.getElementById('receiptAmountUGX').textContent = formatUGX(transaction.amount);
+  document.getElementById('receiptAmountUSD').textContent = formatUSD(transaction.amount);
+  document.getElementById('receiptTimestamp').textContent = now.toLocaleString();
+  document.getElementById('receiptModal').classList.add('active');
+}
+
+function printReceipt() { window.print(); }
+
+function viewReceipt(transactionId) {
+  const txn = transactions.find(t => t.id === transactionId);
+  if (txn) { generateReceipt(txn); }
+  else { showToast('Receipt not found', 'error'); }
+}
+
+async function deleteProject(projectId) {
+  if (!confirm('Are you sure you want to delete this project?')) return;
+  try {
+    if (supabaseClient) {
+      await supabaseClient.from('projects').delete().eq('id', projectId);
+    }
+    projects = projects.filter(p => p.id !== projectId);
+    renderProjectsTable();
+    renderDashboardProjects();
+    updateStats();
+    showToast('Project deleted successfully!');
+  } catch (error) {
+    showToast('Failed to delete project: ' + error.message, 'error');
+  }
+}
+
+// ==================== STATS ====================
+function updateStats() {
+  const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const profit = income - expenses;
+  
+  const paidCount = projects.filter(p => p.status === 'completed').length;
+  const pendingCount = projects.filter(p => p.status === 'pending' || p.status === 'active').length;
+  
+  document.getElementById('totalRevenue').innerHTML = formatCurrencyHTML(income);
+  document.getElementById('totalExpenses').innerHTML = formatCurrencyHTML(expenses);
+  document.getElementById('netProfit').innerHTML = formatCurrencyHTML(profit);
+  document.getElementById('pendingCount').textContent = pendingCount;
+  
+  const monthlyTarget = 5000;
+  const progress = Math.min(100, (income / monthlyTarget) * 100);
+  document.getElementById('targetProgress').style.width = `${progress}%`;
+  document.getElementById('targetText').textContent = `${Math.round(progress)}% achieved`;
+  document.getElementById('incomeThisMonth').innerHTML = formatCurrencyHTML(income);
+  document.getElementById('expensesThisMonth').innerHTML = formatCurrencyHTML(expenses);
+  document.getElementById('dashboardNetProfit').innerHTML = formatCurrencyHTML(profit);
+}
+
+function updateUpcomingDeadlines() {
+  const container = document.getElementById('upcomingList');
+  const upcoming = projects
+    .filter(p => getProjectStatus(p) !== 'completed' && getProjectStatus(p) !== 'overdue')
+    .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+    .slice(0, 5);
+  
+  if (upcoming.length === 0) {
+    container.innerHTML = '<div style="text-align: center; color: var(--gray); padding: 20px;">No upcoming deadlines</div>';
+    return;
+  }
+  
+  container.innerHTML = upcoming.map(project => {
+    const days = Math.ceil((new Date(project.due_date) - new Date()) / (1000 * 60 * 60 * 24));
+    return `
+      <div style="padding: 12px; background: #f9fafb; border-radius: 6px; border-left: 4px solid var(--primary);">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div>
+            <strong style="font-size: 0.95rem;">${escapeHtml(project.name)}</strong><br>
+            <small style="color: var(--gray);">${escapeHtml(project.client)}</small>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-weight: bold; color: ${days <= 7 ? 'var(--warning)' : 'var(--success)'}">${days} days</div>
+            <small style="color: var(--gray);">${new Date(project.due_date).toLocaleDateString()}</small>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateReportStats() {
+  document.getElementById('reportTotalProjects').textContent = projects.length;
+  const completionRate = projects.length > 0 ? Math.round((projects.filter(p => p.status === 'completed').length / projects.length) * 100) : 0;
+  document.getElementById('reportCompletionRate').textContent = `${completionRate}%`;
+  const avgValue = projects.length > 0 ? projects.reduce((sum, p) => sum + (p.amount || 0), 0) / projects.length : 0;
+  document.getElementById('reportAvgValue').innerHTML = formatCurrencyHTML(avgValue);
+}
+
+// ==================== CHART ====================
+function initChart() {
+  const ctx = document.getElementById('revenueChart').getContext('2d');
+  revenueChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [{
+        label: 'Revenue (USD)',
+        data: [1200, 1900, 3000, 2500, 2200, 3400],
+        backgroundColor: 'rgba(37, 99, 235, 0.7)',
+        borderColor: 'rgba(37, 99, 235, 1)',
+        borderWidth: 2,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: { color: '#6b7280' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: '#6b7280' }
+        }
+      }
+    }
+  });
+}
+
+// ==================== EXPORT ====================
+function refreshData() {
+  showToast('Refreshing data...');
+  loadProjects();
+  loadTransactions();
+}
+
+function exportData() {
+  const data = { projects, transactions, exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `projectpay-export-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported successfully!');
+}
+
+function exportCSV() {
+  let csv = 'Project,Client,Amount (USD),Amount (UGX),Status,Due Date\n';
+  projects.forEach(p => {
+    csv += `"${p.name}","${p.client}",${p.amount},${p.amount * USD_TO_UGX_RATE},${p.status},${p.due_date}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `projects-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  showToast('CSV exported successfully!');
+}
+
+function printMonthlyReport() {
+  const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const report = `
+PROJECT PAY TRACKER - MONTHLY REPORT
+Generated: ${new Date().toLocaleString()}
+=====================================
+SUMMARY:
+--------
+Total Revenue: UGX ${(income * USD_TO_UGX_RATE).toLocaleString()} ($${income.toLocaleString()})
+Total Expenses: UGX ${(expenses * USD_TO_UGX_RATE).toLocaleString()} ($${expenses.toLocaleString()})
+Net Profit: UGX ${((income - expenses) * USD_TO_UGX_RATE).toLocaleString()} ($${(income - expenses).toLocaleString()})
+
+ACTIVE PROJECTS:
+----------------
+${projects.map(p => `• ${p.name} (${p.client}) - UGX ${(p.amount * USD_TO_UGX_RATE).toLocaleString()} ($${p.amount.toLocaleString()}) - Due: ${p.due_date}`).join('\n')}
+`;
+  const blob = new Blob([report], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `monthly-report-${new Date().toISOString().split('T')[0]}.txt`;
+  a.click();
+  showToast('Report ready for download!');
+}
+
+// ==================== UTILITIES ====================
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  const toastMessage = document.getElementById('toastMessage');
+  toast.className = `toast ${type}`;
+  toastMessage.textContent = message;
+  toast.classList.remove('hidden');
+  setTimeout(() => { toast.classList.add('hidden'); }, 4000);
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+document.querySelectorAll('.receipt-modal').forEach(modal => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('active');
+  });
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.receipt-modal.active').forEach(m => m.classList.remove('active'));
+  }
+});
 </script>
 </body>
 </html>
